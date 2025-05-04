@@ -56,21 +56,14 @@ jobs:
           "
           
           # Then copy the Go binary
-          scp -P ${{ secrets.VPS_PORT }} docker-manager root@${{ secrets.VPS_HOST }}:${{ secrets.VPS_ROOT_DIR }}/
+          scp -P ${{ secrets.VPS_PORT }} go-docker-manager root@${{ secrets.VPS_HOST }}:${{ secrets.VPS_ROOT_DIR }}/
           
           # Set permissions and finalize deployment
           ssh -p ${{ secrets.VPS_PORT }} root@${{ secrets.VPS_HOST }} "
             set -e
             
             # Make the Go application executable
-            chmod +x ${{ secrets.VPS_ROOT_DIR }}/docker-manager
-            
-            # Set permissions for operation scripts
-            mkdir -p ${{ secrets.VPS_ROOT_DIR }}/operations
-            if [ -d \"${{ secrets.VPS_ROOT_DIR }}/operations\" ]; then
-              echo \"Setting permissions for operation scripts...\"
-              find ${{ secrets.VPS_ROOT_DIR }}/operations -type f -name "*.sh" -exec chmod +x {} \;
-            fi
+            chmod +x ${{ secrets.VPS_ROOT_DIR }}/go-docker-manager
             
             echo \"Deployment completed successfully!\"
           "
