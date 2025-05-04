@@ -66,6 +66,7 @@ jobs:
             chmod +x ${{ secrets.VPS_ROOT_DIR }}/docker-manager
             
             # Set permissions for operation scripts
+            mkdir -p ${{ secrets.VPS_ROOT_DIR }}/operations
             if [ -d \"${{ secrets.VPS_ROOT_DIR }}/operations\" ]; then
               echo \"Setting permissions for operation scripts...\"
               chmod +x ${{ secrets.VPS_ROOT_DIR }}/operations/*.sh
