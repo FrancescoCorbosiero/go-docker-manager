@@ -34,13 +34,13 @@ Makefile is used as glue cli interface for the Go application logic.
     make dock CONTAINER="webserver" TEMPLATE="traefik"
     ```
 
-    It should run the Go app inherent to *docking* process (create configuration file and run). 
+    It should run the Go app inherent to *docking* process (create configuration file and run).
 
 ## Host new container from web UI
 
 ...
 
-## Setup on VPS
+## First time setup on VPS
 
 ### Allow GitHub
 

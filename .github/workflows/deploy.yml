@@ -32,6 +32,38 @@ jobs:
       - name: Build Go application
         run: go build -o docker-manager main.go
 
+      - name: Setup GitHub Deploy Key on VPS
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: root
+          key: ${{ secrets.VPS_PRIVATE_KEY }}
+          port: ${{ secrets.VPS_PORT }}
+          script: |
+            # Check if GitHub deploy key already exists
+            if [ ! -f ~/.ssh/id_ed25519 ]; then
+              echo "Creating GitHub deploy key..."
+              # Generate a deploy key with no passphrase
+              ssh-keygen -t ed25519 -C "vps-github-deploy" -f ~/.ssh/id_ed25519 -N ""
+              
+              # Output the public key for adding to GitHub
+              echo "===== GitHub Deploy Public Key ====="
+              cat ~/.ssh/id_ed25519.pub
+              echo "=================================="
+              echo "Add this key to your GitHub repo's Deploy Keys (Settings -> Deploy Keys)"
+              echo "Don't forget to check 'Allow write access' if needed"
+              
+              # Add GitHub to known_hosts
+              ssh-keyscan github.com >> ~/.ssh/known_hosts
+              
+              # Note: You'll need to manually add this key to GitHub Deploy Keys
+              # for the first run, or store it as a secret and use GitHub API
+            fi
+            
+            # Test GitHub connection (will fail if key not added to GitHub yet)
+            echo "Testing GitHub connection..."
+            ssh -T git@github.com || echo "Key may not be added to GitHub yet. Add the above key to GitHub Deploy Keys."
+
       - name: SSH Deploy
         uses: appleboy/ssh-action@v1.0.3
         with:
@@ -41,20 +73,33 @@ jobs:
           port: ${{ secrets.VPS_PORT }}
           script: |
             set -e
-            if [ ! -d "/containers/.git" ]; then
-              git clone git@github.com:FrancescoCorbosiero/containers-pipeline.git /containers
+            
+            # Try cloning the repository
+            if [ ! -d "${{ secrets.VPS_ROOT_DIR}}/.git" ]; then
+              echo "Cloning repository..."
+              # Using GIT_SSH_COMMAND to specify the identity file
+              GIT_SSH_COMMAND="ssh -i ~/.ssh/id_ed25519 -o IdentitiesOnly=yes" git clone ${{ secrets.GITHUB_SSH_REPO }} ${{ secrets.VPS_ROOT_DIR}} || {
+                echo "Failed to clone repository. Ensure the deploy key is added to GitHub."
+                exit 1
+              }
             else
-              cd /containers
-              git pull origin main
+              echo "Repository exists, pulling updates..."
+              cd ${{ secrets.VPS_ROOT_DIR}}
+              GIT_SSH_COMMAND="ssh -i ~/.ssh/id_ed25519 -o IdentitiesOnly=yes" git pull origin main || {
+                echo "Failed to pull updates. Ensure the deploy key is added to GitHub."
+                exit 1
+              }
             fi
             
             # Copy built Go application to the repository folder
-            cp $GITHUB_WORKSPACE/docker-manager /containers/
-            chmod +x /containers/docker-manager
+            echo "Copying Go application..."
+            cp $GITHUB_WORKSPACE/docker-manager ${{ secrets.VPS_ROOT_DIR}}/
+            chmod +x ${{ secrets.VPS_ROOT_DIR}}/docker-manager
             
             # Set permissions for operation scripts
-            if [ -d "/containers/operations" ]; then
-              chmod +x /containers/operations/*.sh
+            if [ -d "${{ secrets.VPS_ROOT_DIR}}/operations" ]; then
+              echo "Setting permissions for operation scripts..."
+              chmod +x ${{ secrets.VPS_ROOT_DIR}}/operations/*.sh
             fi
             
             echo "Deployment completed successfully!"
