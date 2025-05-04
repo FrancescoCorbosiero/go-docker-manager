@@ -119,7 +119,7 @@ func dockContainer(config Configuration, containerName, templateName string) err
 	}
 
 	// Read template .env file
-	templateEnvPath := filepath.Join(templateDir, ".env")
+	templateEnvPath := filepath.Join(templateDir, ".env.template")
 	templateEnvContent, err := os.ReadFile(templateEnvPath)
 	if err != nil {
 		return fmt.Errorf("failed to read template .env file: %v", err)
