@@ -1,7 +1,7 @@
 # Containers CI/CD pipeline
 
 **Goal:**
-Fast & easy orchestration of docker containers on single remote VPS.
+Intuitive & easy orchestration of docker containers on single remote VPS.
 
 In order to host a new webiste it's enough to create a module under /compose directory.
 A module is composed of those necessary configuration files in order to run with docker compose (usually .env + docker-compose.yml is enough).
@@ -69,16 +69,16 @@ Makefile is used as glue cli interface for the Go application logic.
 
 1. Clone from GitHub
 
-   Under `/containers-pipeline`
+   Under `/go-docker-manager`
 
     ```bash
-    git clone https://github.com/FrancescoCorbosiero/containers-pipeline.git
+    git clone https://github.com/FrancescoCorbosiero/go-docker-manager.git
     ```
 
     or under current dir
 
     ```bash
-    git clone https://github.com/FrancescoCorbosiero/containers-pipeline.git .
+    git clone https://github.com/FrancescoCorbosiero/go-docker-manager.git .
     ```
 
 2. Generate SSH key
