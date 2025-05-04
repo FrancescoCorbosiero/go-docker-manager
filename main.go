@@ -9,7 +9,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
-	"text/template"
+//	"text/template"
 )
 
 // Configuration represents the application configuration
