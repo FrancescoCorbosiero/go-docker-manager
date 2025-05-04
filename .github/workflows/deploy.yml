@@ -32,10 +32,7 @@ jobs:
           # First ensure the directory exists on the remote server
           ssh -p ${{ secrets.VPS_PORT }} root@${{ secrets.VPS_HOST }} "mkdir -p ${{ secrets.VPS_ROOT_DIR }}"
           
-          # Then copy the Go binary
-          scp -P ${{ secrets.VPS_PORT }} docker-manager root@${{ secrets.VPS_HOST }}:${{ secrets.VPS_ROOT_DIR }}/
-          
-          # Execute deployment commands
+          # Execute deployment commands for repository management
           ssh -p ${{ secrets.VPS_PORT }} root@${{ secrets.VPS_HOST }} "
             set -e
             
@@ -46,7 +43,7 @@ jobs:
               git init
               git remote add origin ${{ secrets.SSH_REPO }}
               git fetch
-              git checkout -f origin/main
+              git checkout -f -B main origin/main
             elif [ ! -d \"${{ secrets.VPS_ROOT_DIR }}\" ]; then
               echo \"Cloning repository...\"
               git clone ${{ secrets.SSH_REPO }} ${{ secrets.VPS_ROOT_DIR }}
@@ -56,6 +53,14 @@ jobs:
               git fetch
               git reset --hard origin/main
             fi
+          "
+          
+          # Then copy the Go binary
+          scp -P ${{ secrets.VPS_PORT }} docker-manager root@${{ secrets.VPS_HOST }}:${{ secrets.VPS_ROOT_DIR }}/
+          
+          # Set permissions and finalize deployment
+          ssh -p ${{ secrets.VPS_PORT }} root@${{ secrets.VPS_HOST }} "
+            set -e
             
             # Make the Go application executable
             chmod +x ${{ secrets.VPS_ROOT_DIR }}/docker-manager
