@@ -9,7 +9,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
-//	"text/template"
+	"bufio"
 )
 
 // Configuration represents the application configuration
@@ -126,34 +126,10 @@ func dockContainer(config Configuration, containerName, templateName string) err
 	}
 
 	// Process the .env template with user input for variable values
-	moduleEnvVars := make(map[string]string)
-	lines := strings.Split(string(templateEnvContent), "\n")
-	for _, line := range lines {
-		line = strings.TrimSpace(line)
-		if line == "" || strings.HasPrefix(line, "#") {
-			continue
-		}
-
-		parts := strings.SplitN(line, "=", 2)
-		if len(parts) != 2 {
-			continue
-		}
-
-		key := parts[0]
-		defaultValue := parts[1]
-
-		// If the key is surrounded by <>, it's a placeholder that needs user input
-		if strings.HasPrefix(defaultValue, "<") && strings.HasSuffix(defaultValue, ">") {
-			fmt.Printf("Enter value for %s [%s]: ", key, defaultValue)
-			var value string
-			fmt.Scanln(&value)
-			if value == "" {
-				value = defaultValue
-			}
-			moduleEnvVars[key] = value
-		} else {
-			moduleEnvVars[key] = defaultValue
-		}
+	moduleEnvVars := processEnvTemplate(string(templateEnvContent))
+	fmt.Println("\nProcessed Environment Variables:")
+	for key, value := range moduleEnvVars {
+	 fmt.Printf("%s=%s\n", key, value)
 	}
 
 	// Create .env file with user-provided values
@@ -247,6 +223,70 @@ func restartContainer(containerName string) error {
 	log.Printf("Container %s restarted successfully", containerName)
 	fmt.Printf("Container %s restarted successfully\n", containerName)
 	return nil
+}
+
+func processEnvTemplate(templateEnvContent string) map[string]string {
+	moduleEnvVars := make(map[string]string)
+	placeholders := make(map[string]bool)
+	placeholderValues := make(map[string]string)
+
+	scanner := bufio.NewScanner(strings.NewReader(templateEnvContent))
+	for scanner.Scan() {
+		line := strings.TrimSpace(scanner.Text())
+		if line == "" || strings.HasPrefix(line, "#") {
+		continue
+		}
+
+		parts := strings.SplitN(line, "=", 2)
+		if len(parts) != 2 {
+		continue
+		}
+
+		key := parts[0]
+		defaultValue := parts[1]
+
+		if strings.HasPrefix(defaultValue, "<") && strings.HasSuffix(defaultValue, ">") {
+		placeholder := strings.TrimPrefix(strings.TrimSuffix(defaultValue, ">"), "<")
+		placeholders[placeholder] = true
+		} else {
+		moduleEnvVars[key] = defaultValue
+		}
+	}
+
+	reader := bufio.NewReader(os.Stdin)
+	for placeholder := range placeholders {
+		fmt.Printf("Enter value for %s: ", placeholder)
+		value, _ := reader.ReadString('\n')
+		value = strings.TrimSpace(value)
+		if value == "" {
+		placeholderValues[placeholder] = "<" + placeholder + ">" // Keep default if no input
+		} else {
+		placeholderValues[placeholder] = value
+		}
+	}
+
+	scanner = bufio.NewScanner(strings.NewReader(templateEnvContent))
+	for scanner.Scan() {
+		line := strings.TrimSpace(scanner.Text())
+		if line == "" || strings.HasPrefix(line, "#") {
+		continue
+		}
+
+		parts := strings.SplitN(line, "=", 2)
+		if len(parts) != 2 {
+		continue
+		}
+
+		key := parts[0]
+		defaultValue := parts[1]
+
+		if strings.HasPrefix(defaultValue, "<") && strings.HasSuffix(defaultValue, ">") {
+		placeholder := strings.TrimPrefix(strings.TrimSuffix(defaultValue, ">"), "<")
+		moduleEnvVars[key] = placeholderValues[placeholder]
+		}
+	}
+
+	return moduleEnvVars
 }
 
 // copyFile copies a file from src to dst
