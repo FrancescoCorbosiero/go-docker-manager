@@ -8,7 +8,8 @@ import (
 	"os"
 	"strings"
 	"bufio"
-	"go-docker-manager/shared"
+	"github.com/FrancescoCorbosiero/go-docker-manager/shared"
+	dockerops "github.com/FrancescoCorbosiero/go-docker-manager/internal"
 )
 
 func main() {
@@ -21,7 +22,7 @@ func main() {
 	log.SetOutput(io.MultiWriter(logFile, os.Stdout))
 
 	// Configuration
-	config := Configuration{
+	config := shared.Configuration{
 		TemplatesDir: "templates",
 		ComposeDir:   "compose",
 	}
@@ -38,12 +39,12 @@ func main() {
 		if *container == "" || *template == "" {
 			log.Fatal("Container name and template are required for dock command")
 		}
-		err := dockContainer(config, *container, *template)
+		err := dockerops.dockContainer(config, *container, *template)
 		if err != nil {
 			log.Fatalf("Failed to dock container: %v", err)
 		}
 	case "list":
-		err := listContainers()
+		err := dockerops.listContainers()
 		if err != nil {
 			log.Fatalf("Failed to list containers: %v", err)
 		}
@@ -51,7 +52,7 @@ func main() {
 		if *container == "" {
 			log.Fatal("Container name is required for logs command")
 		}
-		err := showLogs(*container)
+		err := dockerops.showLogs(*container)
 		if err != nil {
 			log.Fatalf("Failed to show logs: %v", err)
 		}
@@ -59,7 +60,7 @@ func main() {
 		if *container == "" {
 			log.Fatal("Container name is required for down command")
 		}
-		err := stopContainer(*container)
+		err := dockerops.stopContainer(*container)
 		if err != nil {
 			log.Fatalf("Failed to stop container: %v", err)
 		}
@@ -67,7 +68,7 @@ func main() {
 		if *container == "" {
 			log.Fatal("Container name is required for restart command")
 		}
-		err := restartContainer(*container)
+		err := dockerops.restartContainer(*container)
 		if err != nil {
 			log.Fatalf("Failed to restart container: %v", err)
 		}

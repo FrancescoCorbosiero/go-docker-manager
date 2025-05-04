@@ -6,11 +6,11 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"go-docker-manager/shared"
+	"github.com/FrancescoCorbosiero/go-docker-manager/shared"
 )
 
 // dockContainer creates a new module from a template and runs it
-func dockContainer(config Configuration, containerName, templateName string) error {
+func dockContainer(config shared.Configuration, containerName, templateName string) error {
 	log.Printf("Docking container %s using template %s", containerName, templateName)
 
 	// Check if template exists
