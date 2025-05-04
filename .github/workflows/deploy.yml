@@ -39,14 +39,22 @@ jobs:
           ssh -p ${{ secrets.VPS_PORT }} root@${{ secrets.VPS_HOST }} "
             set -e
             
-            # Try cloning the repository
-            if [ ! -d \"${{ secrets.VPS_ROOT_DIR }}/.git\" ]; then
+            # Check if directory exists but is not a git repo
+            if [ -d \"${{ secrets.VPS_ROOT_DIR }}\" ] && [ ! -d \"${{ secrets.VPS_ROOT_DIR }}/.git\" ]; then
+              echo \"Directory exists but is not a git repository. Initializing git...\"
+              cd ${{ secrets.VPS_ROOT_DIR }}
+              git init
+              git remote add origin ${{ secrets.SSH_REPO }}
+              git fetch
+              git checkout -f origin/main
+            elif [ ! -d \"${{ secrets.VPS_ROOT_DIR }}\" ]; then
               echo \"Cloning repository...\"
               git clone ${{ secrets.SSH_REPO }} ${{ secrets.VPS_ROOT_DIR }}
             else
               echo \"Repository exists, pulling updates...\"
               cd ${{ secrets.VPS_ROOT_DIR }}
-              git pull origin main
+              git fetch
+              git reset --hard origin/main
             fi
             
             # Make the Go application executable
