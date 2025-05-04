@@ -6,7 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"src/shared"
+	"go-docker-manager/shared"
 )
 
 // dockContainer creates a new module from a template and runs it

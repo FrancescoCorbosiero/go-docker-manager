@@ -8,7 +8,7 @@ import (
 	"os"
 	"strings"
 	"bufio"
-	"src/shared"
+	"go-docker-manager/shared"
 )
 
 func main() {
