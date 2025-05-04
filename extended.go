@@ -9,6 +9,8 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"github.com/FrancescoCorbosiero/go-docker-manager/shared"
+	"github.com/FrancescoCorbosiero/go-docker-manager/internal"
 )
 
 // ContainerStatus represents the status info for a container
@@ -36,7 +38,7 @@ type ServerConfig struct {
 }
 
 // APIServer implements a simple web server for container management
-func startAPIServer(config Configuration) {
+func startAPIServer(config shared.Configuration) {
 	// Load server configuration
 	serverConfig := ServerConfig{
 		Port:     "8080",
@@ -72,14 +74,14 @@ func startAPIServer(config Configuration) {
 			return
 		}
 
-		var moduleConfig ModuleConfig
+		var moduleConfig shared.ModuleConfig
 		err := json.NewDecoder(r.Body).Decode(&moduleConfig)
 		if err != nil {
 			http.Error(w, fmt.Sprintf("Failed to parse request body: %v", err), http.StatusBadRequest)
 			return
 		}
 
-		err = dockContainer(config, moduleConfig.Name, moduleConfig.Template)
+		err = internal.DockContainer(config, moduleConfig.Name, moduleConfig.Template)
 		if err != nil {
 			http.Error(w, fmt.Sprintf("Failed to dock container: %v", err), http.StatusInternalServerError)
 			return
@@ -95,7 +97,7 @@ func startAPIServer(config Configuration) {
 }
 
 // listModules returns information about all modules in the compose directory
-func listModules(config Configuration) ([]ModuleInfo, error) {
+func listModules(config shared.Configuration) ([]ModuleInfo, error) {
 	var modules []ModuleInfo
 
 	// Read the compose directory
@@ -162,7 +164,7 @@ func listModules(config Configuration) ([]ModuleInfo, error) {
 }
 
 // listTemplates returns the list of available templates
-func listTemplates(config Configuration) ([]string, error) {
+func listTemplates(config shared.Configuration) ([]string, error) {
 	templates := []string{}
 
 	// Read the templates directory
@@ -187,7 +189,7 @@ func listTemplates(config Configuration) ([]string, error) {
 }
 
 // mustListTemplates is like listTemplates but panics on error
-func mustListTemplates(config Configuration) []string {
+func mustListTemplates(config shared.Configuration) []string {
 	templates, err := listTemplates(config)
 	if err != nil {
 		log.Fatalf("Failed to list templates: %v", err)
@@ -225,19 +227,19 @@ func getModuleStatus(moduleName string) string {
 // as a starting point for extending the application.
 
 // backupModule creates a backup of a module
-func backupModule(config Configuration, moduleName string) error {
+func backupModule(config shared.Configuration, moduleName string) error {
 	// Implementation would create a backup of the module configuration
 	return nil
 }
 
 // restoreModule restores a module from backup
-func restoreModule(config Configuration, moduleName, backupName string) error {
+func restoreModule(config shared.Configuration, moduleName, backupName string) error {
 	// Implementation would restore a module from backup
 	return nil
 }
 
 // updateEnvVar updates an environment variable in a module's .env file
-func updateEnvVar(config Configuration, moduleName, key, value string) error {
+func updateEnvVar(config shared.Configuration, moduleName, key, value string) error {
 	// Implementation would update a specific environment variable
 	return nil
 }
