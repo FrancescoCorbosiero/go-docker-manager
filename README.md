@@ -1,4 +1,4 @@
-# Containers CI/CD pipeline
+# Go Docker Manager - Containers CI/CD pipeline
 
 **Goal:**
 Intuitive & easy orchestration of docker containers on single remote VPS.
