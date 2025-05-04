@@ -1,3 +1,3 @@
 module github.com/FrancescoCorbosiero/go-docker-manager
 
-go 1.22
+go 1.20
