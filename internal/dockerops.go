@@ -47,10 +47,6 @@ func DockContainer(config shared.Configuration, containerName, templateName stri
 
 	// Process the .env template with user input for variable values
 	moduleEnvVars := utils.ProcessEnvTemplate(string(templateEnvContent))
-	fmt.Println("\nProcessed Environment Variables:")
-	for key, value := range moduleEnvVars {
-	 fmt.Printf("%s=%s\n", key, value)
-	}
 
 	// Create .env file with user-provided values
 	moduleEnvPath := filepath.Join(moduleDir, ".env")
