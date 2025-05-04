@@ -25,7 +25,7 @@ jobs:
           ssh-keyscan -p ${{ secrets.VPS_PORT }} ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts
           
       - name: Build Go application
-        run: go build -o docker-manager main.go
+        run: go build -o go-docker-manager main.go
 
       - name: Deploy via SSH
         run: |
