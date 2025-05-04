@@ -1,15 +1,14 @@
 package main
 
 import (
-	"flag"
 	"fmt"
+	"flag"
 	"io"
 	"log"
 	"os"
-	"strings"
-	"bufio"
 	"github.com/FrancescoCorbosiero/go-docker-manager/shared"
-	dockerops "github.com/FrancescoCorbosiero/go-docker-manager/internal"
+	"github.com/FrancescoCorbosiero/go-docker-manager/internal"
+	//"github.com/FrancescoCorbosiero/go-docker-manager/pkg/utils"
 )
 
 func main() {
@@ -39,12 +38,12 @@ func main() {
 		if *container == "" || *template == "" {
 			log.Fatal("Container name and template are required for dock command")
 		}
-		err := dockerops.dockContainer(config, *container, *template)
+		err := internal.DockContainer(config, *container, *template)
 		if err != nil {
 			log.Fatalf("Failed to dock container: %v", err)
 		}
 	case "list":
-		err := dockerops.listContainers()
+		err := internal.ListContainers()
 		if err != nil {
 			log.Fatalf("Failed to list containers: %v", err)
 		}
@@ -52,7 +51,7 @@ func main() {
 		if *container == "" {
 			log.Fatal("Container name is required for logs command")
 		}
-		err := dockerops.showLogs(*container)
+		err := internal.ShowLogs(*container)
 		if err != nil {
 			log.Fatalf("Failed to show logs: %v", err)
 		}
@@ -60,7 +59,7 @@ func main() {
 		if *container == "" {
 			log.Fatal("Container name is required for down command")
 		}
-		err := dockerops.stopContainer(*container)
+		err := internal.StopContainer(*container)
 		if err != nil {
 			log.Fatalf("Failed to stop container: %v", err)
 		}
@@ -68,99 +67,13 @@ func main() {
 		if *container == "" {
 			log.Fatal("Container name is required for restart command")
 		}
-		err := dockerops.restartContainer(*container)
+		err := internal.RestartContainer(*container)
 		if err != nil {
 			log.Fatalf("Failed to restart container: %v", err)
 		}
 	default:
 		printHelp()
 	}
-}
-
-func processEnvTemplate(templateEnvContent string) map[string]string {
-	moduleEnvVars := make(map[string]string)
-	placeholders := make(map[string]bool)
-	placeholderValues := make(map[string]string)
-
-	scanner := bufio.NewScanner(strings.NewReader(templateEnvContent))
-	for scanner.Scan() {
-		line := strings.TrimSpace(scanner.Text())
-		if line == "" || strings.HasPrefix(line, "#") {
-		continue
-		}
-
-		parts := strings.SplitN(line, "=", 2)
-		if len(parts) != 2 {
-		continue
-		}
-
-		key := parts[0]
-		defaultValue := parts[1]
-
-		if strings.HasPrefix(defaultValue, "<") && strings.HasSuffix(defaultValue, ">") {
-		placeholder := strings.TrimPrefix(strings.TrimSuffix(defaultValue, ">"), "<")
-		placeholders[placeholder] = true
-		} else {
-		moduleEnvVars[key] = defaultValue
-		}
-	}
-
-	reader := bufio.NewReader(os.Stdin)
-	for placeholder := range placeholders {
-		fmt.Printf("Enter value for %s: ", placeholder)
-		value, _ := reader.ReadString('\n')
-		value = strings.TrimSpace(value)
-		if value == "" {
-		placeholderValues[placeholder] = "<" + placeholder + ">" // Keep default if no input
-		} else {
-		placeholderValues[placeholder] = value
-		}
-	}
-
-	scanner = bufio.NewScanner(strings.NewReader(templateEnvContent))
-	for scanner.Scan() {
-		line := strings.TrimSpace(scanner.Text())
-		if line == "" || strings.HasPrefix(line, "#") {
-		continue
-		}
-
-		parts := strings.SplitN(line, "=", 2)
-		if len(parts) != 2 {
-		continue
-		}
-
-		key := parts[0]
-		defaultValue := parts[1]
-
-		if strings.HasPrefix(defaultValue, "<") && strings.HasSuffix(defaultValue, ">") {
-		placeholder := strings.TrimPrefix(strings.TrimSuffix(defaultValue, ">"), "<")
-		moduleEnvVars[key] = placeholderValues[placeholder]
-		}
-	}
-
-	return moduleEnvVars
-}
-
-// copyFile copies a file from src to dst
-func copyFile(src, dst string) error {
-	sourceFile, err := os.Open(src)
-	if err != nil {
-		return err
-	}
-	defer sourceFile.Close()
-
-	destFile, err := os.Create(dst)
-	if err != nil {
-		return err
-	}
-	defer destFile.Close()
-
-	_, err = io.Copy(destFile, sourceFile)
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
 
 // printHelp prints the help message

@@ -5,6 +5,8 @@ import (
     "os"
     "os/exec"
     "strings"
+	"bufio"
+    "io"
 )
 
 // RunShell runs a shell command and returns its output or error
@@ -79,4 +81,90 @@ func CheckTraefikHealth(containerName string) {
         fmt.Println(logs)
         os.Exit(1)
     }
+}
+
+func ProcessEnvTemplate(templateEnvContent string) map[string]string {
+	moduleEnvVars := make(map[string]string)
+	placeholders := make(map[string]bool)
+	placeholderValues := make(map[string]string)
+
+	scanner := bufio.NewScanner(strings.NewReader(templateEnvContent))
+	for scanner.Scan() {
+		line := strings.TrimSpace(scanner.Text())
+		if line == "" || strings.HasPrefix(line, "#") {
+		continue
+		}
+
+		parts := strings.SplitN(line, "=", 2)
+		if len(parts) != 2 {
+		continue
+		}
+
+		key := parts[0]
+		defaultValue := parts[1]
+
+		if strings.HasPrefix(defaultValue, "<") && strings.HasSuffix(defaultValue, ">") {
+		placeholder := strings.TrimPrefix(strings.TrimSuffix(defaultValue, ">"), "<")
+		placeholders[placeholder] = true
+		} else {
+		moduleEnvVars[key] = defaultValue
+		}
+	}
+
+	reader := bufio.NewReader(os.Stdin)
+	for placeholder := range placeholders {
+		fmt.Printf("Enter value for %s: ", placeholder)
+		value, _ := reader.ReadString('\n')
+		value = strings.TrimSpace(value)
+		if value == "" {
+		placeholderValues[placeholder] = "<" + placeholder + ">" // Keep default if no input
+		} else {
+		placeholderValues[placeholder] = value
+		}
+	}
+
+	scanner = bufio.NewScanner(strings.NewReader(templateEnvContent))
+	for scanner.Scan() {
+		line := strings.TrimSpace(scanner.Text())
+		if line == "" || strings.HasPrefix(line, "#") {
+		continue
+		}
+
+		parts := strings.SplitN(line, "=", 2)
+		if len(parts) != 2 {
+		continue
+		}
+
+		key := parts[0]
+		defaultValue := parts[1]
+
+		if strings.HasPrefix(defaultValue, "<") && strings.HasSuffix(defaultValue, ">") {
+		placeholder := strings.TrimPrefix(strings.TrimSuffix(defaultValue, ">"), "<")
+		moduleEnvVars[key] = placeholderValues[placeholder]
+		}
+	}
+
+	return moduleEnvVars
+}
+
+// copyFile copies a file from src to dst
+func CopyFile(src, dst string) error {
+	sourceFile, err := os.Open(src)
+	if err != nil {
+		return err
+	}
+	defer sourceFile.Close()
+
+	destFile, err := os.Create(dst)
+	if err != nil {
+		return err
+	}
+	defer destFile.Close()
+
+	_, err = io.Copy(destFile, sourceFile)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

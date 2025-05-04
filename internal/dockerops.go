@@ -7,10 +7,11 @@ import (
 	"os/exec"
 	"path/filepath"
 	"github.com/FrancescoCorbosiero/go-docker-manager/shared"
+	utils "github.com/FrancescoCorbosiero/go-docker-manager/pkg/utils"
 )
 
 // dockContainer creates a new module from a template and runs it
-func dockContainer(config shared.Configuration, containerName, templateName string) error {
+func DockContainer(config shared.Configuration, containerName, templateName string) error {
 	log.Printf("Docking container %s using template %s", containerName, templateName)
 
 	// Check if template exists
@@ -29,7 +30,7 @@ func dockContainer(config shared.Configuration, containerName, templateName stri
 	}
 
 	// Copy docker-compose.yml from template to module
-	err := copyFile(
+	err := utils.CopyFile(
 		filepath.Join(templateDir, "docker-compose.yml"),
 		filepath.Join(moduleDir, "docker-compose.yml"),
 	)
@@ -45,7 +46,7 @@ func dockContainer(config shared.Configuration, containerName, templateName stri
 	}
 
 	// Process the .env template with user input for variable values
-	moduleEnvVars := processEnvTemplate(string(templateEnvContent))
+	moduleEnvVars := utils.ProcessEnvTemplate(string(templateEnvContent))
 	fmt.Println("\nProcessed Environment Variables:")
 	for key, value := range moduleEnvVars {
 	 fmt.Printf("%s=%s\n", key, value)
@@ -80,7 +81,7 @@ func dockContainer(config shared.Configuration, containerName, templateName stri
 }
 
 // listContainers lists all running docker containers
-func listContainers() error {
+func ListContainers() error {
 	cmd := exec.Command("docker", "ps")
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
@@ -88,7 +89,7 @@ func listContainers() error {
 }
 
 // showLogs shows logs for a specific container
-func showLogs(containerName string) error {
+func ShowLogs(containerName string) error {
 	// Find the directory for the container
 	moduleDir := filepath.Join("compose", containerName)
 	if _, err := os.Stat(moduleDir); os.IsNotExist(err) {
@@ -103,7 +104,7 @@ func showLogs(containerName string) error {
 }
 
 // stopContainer stops and removes a container
-func stopContainer(containerName string) error {
+func StopContainer(containerName string) error {
 	moduleDir := filepath.Join("compose", containerName)
 	if _, err := os.Stat(moduleDir); os.IsNotExist(err) {
 		return fmt.Errorf("module directory for %s does not exist", containerName)
@@ -117,7 +118,7 @@ func stopContainer(containerName string) error {
 }
 
 // restartContainer restarts a container
-func restartContainer(containerName string) error {
+func RestartContainer(containerName string) error {
 	moduleDir := filepath.Join("compose", containerName)
 	if _, err := os.Stat(moduleDir); os.IsNotExist(err) {
 		return fmt.Errorf("module directory for %s does not exist", containerName)
