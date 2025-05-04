@@ -7,13 +7,39 @@ import (
     "strings"
 	"bufio"
     "io"
+	"context"
+	"errors"
+	"time"
 )
 
 // RunShell runs a shell command and returns its output or error
 func RunShell(cmdName string, args ...string) (string, error) {
-    cmd := exec.Command(cmdName, args...)
-    output, err := cmd.CombinedOutput()
-    return string(output), err
+	// **Security Check:** Whitelist allowed commands
+	allowedCommands := map[string]bool{
+		"ls":   true,
+		"grep": true,
+		"cat":  true,
+		// Add other explicitly allowed commands
+	}
+	if !allowedCommands[cmdName] {
+		return "", errors.New("command not allowed: " + cmdName)
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second) // Example timeout
+	defer cancel()
+
+	cmd := exec.CommandContext(ctx, cmdName, args...)
+	outputBytes, err := cmd.CombinedOutput()
+
+	if ctx.Err() == context.DeadlineExceeded {
+		return "", errors.New("command execution timed out")
+	}
+
+	if err != nil {
+		return strings.TrimSpace(string(outputBytes)), errors.New(err.Error() + ": " + strings.TrimSpace(string(outputBytes)))
+	}
+
+	return strings.TrimSpace(string(outputBytes)), nil
 }
 
 // EnsureDockerNetworks ensures the required Docker networks exist
