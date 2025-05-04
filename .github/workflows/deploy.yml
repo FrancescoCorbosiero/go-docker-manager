@@ -1,0 +1,60 @@
+name: Deploy to VPS (Root User)
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.20'
+
+      - name: Add VPS to known_hosts
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -p ${{ secrets.VPS_PORT }} ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts
+      
+      - name: Set up SSH Key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.VPS_PRIVATE_KEY }}" | tr -d '\r' > ~/.ssh/deploy_github_actions
+          chmod 600 ~/.ssh/deploy_github_actions
+        shell: bash
+
+      - name: Build Go application
+        run: go build -o docker-manager main.go
+
+      - name: SSH Deploy
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: root
+          key: ${{ secrets.VPS_PRIVATE_KEY }}
+          port: ${{ secrets.VPS_PORT }}
+          script: |
+            set -e
+            if [ ! -d "/containers/.git" ]; then
+              git clone git@github.com:FrancescoCorbosiero/containers-pipeline.git /containers
+            else
+              cd /containers
+              git pull origin main
+            fi
+            
+            # Copy built Go application to the repository folder
+            cp $GITHUB_WORKSPACE/docker-manager /containers/
+            chmod +x /containers/docker-manager
+            
+            # Set permissions for operation scripts
+            if [ -d "/containers/operations" ]; then
+              chmod +x /containers/operations/*.sh
+            fi
+            
+            echo "Deployment completed successfully!"
