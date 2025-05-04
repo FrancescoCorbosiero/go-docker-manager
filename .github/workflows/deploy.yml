@@ -17,57 +17,41 @@ jobs:
         with:
           go-version: '1.20'
 
-      - name: Add VPS to known_hosts
+      - name: Setup SSH
         run: |
           mkdir -p ~/.ssh
+          echo "${{ secrets.VPS_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
           ssh-keyscan -p ${{ secrets.VPS_PORT }} ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts
-      
-      - name: Set up SSH Key
-        run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.VPS_PRIVATE_KEY }}" | tr -d '\r' > ~/.ssh/deploy_github_actions
-          chmod 600 ~/.ssh/deploy_github_actions
-        shell: bash
-
+          
       - name: Build Go application
         run: go build -o docker-manager main.go
 
-      - name: SSH Deploy
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.VPS_HOST }}
-          username: root
-          key: ${{ secrets.VPS_PRIVATE_KEY }}
-          port: ${{ secrets.VPS_PORT }}
-          script: |
+      - name: Deploy via SSH
+        run: |
+          scp -P ${{ secrets.VPS_PORT }} docker-manager root@${{ secrets.VPS_HOST }}:/${{ secrets.VPS_ROOT_DIR }}/
+          
+          ssh -p ${{ secrets.VPS_PORT }} root@${{ secrets.VPS_HOST }} "
             set -e
             
             # Try cloning the repository
-            if [ ! -d "/${{ secrets.VPS_ROOT_DIR}}/.git" ]; then
-              echo "Cloning repository..."
-              # Using GIT_SSH_COMMAND to specify the identity file
-              GIT_SSH_COMMAND="ssh -i ~/.ssh/id_ed25519 -o IdentitiesOnly=yes" git clone ${{ secrets.SSH_REPO }} /${{ secrets.VPS_ROOT_DIR}} || {
-                echo "Failed to clone repository. Ensure the deploy key is added to GitHub."
-                exit 1
-              }
+            if [ ! -d \"/${{ secrets.VPS_ROOT_DIR}}/.git\" ]; then
+              echo \"Cloning repository...\"
+              git clone ${{ secrets.SSH_REPO }} /${{ secrets.VPS_ROOT_DIR}}
             else
-              echo "Repository exists, pulling updates..."
+              echo \"Repository exists, pulling updates...\"
               cd /${{ secrets.VPS_ROOT_DIR}}
-              GIT_SSH_COMMAND="ssh -i ~/.ssh/id_ed25519 -o IdentitiesOnly=yes" git pull origin main || {
-                echo "Failed to pull updates. Ensure the deploy key is added to GitHub."
-                exit 1
-              }
+              git pull origin main
             fi
             
-            # Copy built Go application to the repository folder
-            echo "Copying Go application..."
-            cp $GITHUB_WORKSPACE/docker-manager /${{ secrets.VPS_ROOT_DIR}}/
+            # Make the Go application executable
             chmod +x /${{ secrets.VPS_ROOT_DIR}}/docker-manager
             
             # Set permissions for operation scripts
-            if [ -d "/${{ secrets.VPS_ROOT_DIR}}/operations" ]; then
-              echo "Setting permissions for operation scripts..."
+            if [ -d \"/${{ secrets.VPS_ROOT_DIR}}/operations\" ]; then
+              echo \"Setting permissions for operation scripts...\"
               chmod +x /${{ secrets.VPS_ROOT_DIR}}/operations/*.sh
             fi
             
-            echo "Deployment completed successfully!"
+            echo \"Deployment completed successfully!\"
+          "
