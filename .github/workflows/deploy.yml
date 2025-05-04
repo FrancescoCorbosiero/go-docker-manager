@@ -32,38 +32,6 @@ jobs:
       - name: Build Go application
         run: go build -o docker-manager main.go
 
-      - name: Setup GitHub Deploy Key on VPS
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.VPS_HOST }}
-          username: root
-          key: ${{ secrets.VPS_PRIVATE_KEY }}
-          port: ${{ secrets.VPS_PORT }}
-          script: |
-            # Check if GitHub deploy key already exists
-            if [ ! -f ~/.ssh/id_ed25519 ]; then
-              echo "Creating GitHub deploy key..."
-              # Generate a deploy key with no passphrase
-              ssh-keygen -t ed25519 -C "vps-github-deploy" -f ~/.ssh/id_ed25519 -N ""
-              
-              # Output the public key for adding to GitHub
-              echo "===== GitHub Deploy Public Key ====="
-              cat ~/.ssh/id_ed25519.pub
-              echo "=================================="
-              echo "Add this key to your GitHub repo's Deploy Keys (Settings -> Deploy Keys)"
-              echo "Don't forget to check 'Allow write access' if needed"
-              
-              # Add GitHub to known_hosts
-              ssh-keyscan github.com >> ~/.ssh/known_hosts
-              
-              # Note: You'll need to manually add this key to GitHub Deploy Keys
-              # for the first run, or store it as a secret and use GitHub API
-            fi
-            
-            # Test GitHub connection (will fail if key not added to GitHub yet)
-            echo "Testing GitHub connection..."
-            ssh -T git@github.com || echo "Key may not be added to GitHub yet. Add the above key to GitHub Deploy Keys."
-
       - name: SSH Deploy
         uses: appleboy/ssh-action@v1.0.3
         with:
