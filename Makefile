@@ -16,11 +16,11 @@ help:
 # Build the Go application
 build:
 	@echo "Building Docker Manager..."
-	go build -o docker-manager main.go
+	go build -o go-docker-manager main.go
 
 # List running containers
 list:
-	@./docker-manager -command=list
+	@./go-docker-manager -command=list
 
 # Show logs for a container
 logs:
@@ -29,7 +29,7 @@ logs:
 		echo "Usage: make logs CONTAINER=name"; \
 		exit 1; \
 	fi
-	@./docker-manager -command=logs -container=$(CONTAINER)
+	@./go-docker-manager -command=logs -container=$(CONTAINER)
 
 # Stop and remove a container
 down:
@@ -38,7 +38,7 @@ down:
 		echo "Usage: make down CONTAINER=name"; \
 		exit 1; \
 	fi
-	@./docker-manager -command=down -container=$(CONTAINER)
+	@./go-docker-manager -command=down -container=$(CONTAINER)
 
 # Restart a container
 restart:
@@ -47,7 +47,7 @@ restart:
 		echo "Usage: make restart CONTAINER=name"; \
 		exit 1; \
 	fi
-	@./docker-manager -command=restart -container=$(CONTAINER)
+	@./go-docker-manager -command=restart -container=$(CONTAINER)
 
 # Create and start a new container
 dock:
@@ -61,4 +61,4 @@ dock:
 		echo "Usage: make dock CONTAINER=name TEMPLATE=template"; \
 		exit 1; \
 	fi
-	@./docker-manager -command=dock -container=$(CONTAINER) -template=$(TEMPLATE)
+	@./go-docker-manager -command=dock -container=$(CONTAINER) -template=$(TEMPLATE)
