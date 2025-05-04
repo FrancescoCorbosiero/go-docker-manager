@@ -29,28 +29,33 @@ jobs:
 
       - name: Deploy via SSH
         run: |
-          scp -P ${{ secrets.VPS_PORT }} docker-manager root@${{ secrets.VPS_HOST }}:/${{ secrets.VPS_ROOT_DIR }}/
+          # First ensure the directory exists on the remote server
+          ssh -p ${{ secrets.VPS_PORT }} root@${{ secrets.VPS_HOST }} "mkdir -p ${{ secrets.VPS_ROOT_DIR }}"
           
+          # Then copy the Go binary
+          scp -P ${{ secrets.VPS_PORT }} docker-manager root@${{ secrets.VPS_HOST }}:${{ secrets.VPS_ROOT_DIR }}/
+          
+          # Execute deployment commands
           ssh -p ${{ secrets.VPS_PORT }} root@${{ secrets.VPS_HOST }} "
             set -e
             
             # Try cloning the repository
-            if [ ! -d \"/${{ secrets.VPS_ROOT_DIR}}/.git\" ]; then
+            if [ ! -d \"${{ secrets.VPS_ROOT_DIR }}/.git\" ]; then
               echo \"Cloning repository...\"
-              git clone ${{ secrets.SSH_REPO }} /${{ secrets.VPS_ROOT_DIR}}
+              git clone ${{ secrets.SSH_REPO }} ${{ secrets.VPS_ROOT_DIR }}
             else
               echo \"Repository exists, pulling updates...\"
-              cd /${{ secrets.VPS_ROOT_DIR}}
+              cd ${{ secrets.VPS_ROOT_DIR }}
               git pull origin main
             fi
             
             # Make the Go application executable
-            chmod +x /${{ secrets.VPS_ROOT_DIR}}/docker-manager
+            chmod +x ${{ secrets.VPS_ROOT_DIR }}/docker-manager
             
             # Set permissions for operation scripts
-            if [ -d \"/${{ secrets.VPS_ROOT_DIR}}/operations\" ]; then
+            if [ -d \"${{ secrets.VPS_ROOT_DIR }}/operations\" ]; then
               echo \"Setting permissions for operation scripts...\"
-              chmod +x /${{ secrets.VPS_ROOT_DIR}}/operations/*.sh
+              chmod +x ${{ secrets.VPS_ROOT_DIR }}/operations/*.sh
             fi
             
             echo \"Deployment completed successfully!\"
