@@ -14,53 +14,70 @@ import (
 func DockContainer(config shared.Configuration, containerName, templateName string) error {
 	log.Printf("Docking container %s using template %s", containerName, templateName)
 
-	// Check if template exists
-	templateDir := filepath.Join(config.TemplatesDir, templateName)
-	if _, err := os.Stat(templateDir); os.IsNotExist(err) {
-		return fmt.Errorf("template %s does not exist", templateName)
-	}
-
 	// Create module directory if it doesn't exist
 	moduleDir := filepath.Join(config.ComposeDir, containerName)
 	if _, err := os.Stat(moduleDir); os.IsNotExist(err) {
+		// Directory doesn't exist, we need to create it and set up the container
+		log.Printf("Creating new configuration for container %s", containerName)
+		
+		// Check if template exists
+		templateDir := filepath.Join(config.TemplatesDir, templateName)
+		if _, err := os.Stat(templateDir); os.IsNotExist(err) {
+			return fmt.Errorf("template %s does not exist", templateName)
+		}
+
 		err = os.MkdirAll(moduleDir, 0755)
 		if err != nil {
 			return fmt.Errorf("failed to create module directory: %v", err)
 		}
-	}
 
-	// Copy docker-compose.yml from template to module
-	err := utils.CopyFile(
-		filepath.Join(templateDir, "docker-compose.yml"),
-		filepath.Join(moduleDir, "docker-compose.yml"),
-	)
-	if err != nil {
-		return fmt.Errorf("failed to copy docker-compose.yml: %v", err)
-	}
-
-	// Read template .env file
-	templateEnvPath := filepath.Join(templateDir, ".env.template")
-	templateEnvContent, err := os.ReadFile(templateEnvPath)
-	if err != nil {
-		return fmt.Errorf("failed to read template .env file: %v", err)
-	}
-
-	// Process the .env template with user input for variable values
-	moduleEnvVars := utils.ProcessEnvTemplate(string(templateEnvContent))
-
-	// Create .env file with user-provided values
-	moduleEnvPath := filepath.Join(moduleDir, ".env")
-	moduleEnvFile, err := os.Create(moduleEnvPath)
-	if err != nil {
-		return fmt.Errorf("failed to create module .env file: %v", err)
-	}
-	defer moduleEnvFile.Close()
-
-	for key, value := range moduleEnvVars {
-		_, err := moduleEnvFile.WriteString(fmt.Sprintf("%s=%s\n", key, value))
+		// Copy docker-compose.yml from template to module
+		err := utils.CopyFile(
+			filepath.Join(templateDir, "docker-compose.yml"),
+			filepath.Join(moduleDir, "docker-compose.yml"),
+		)
 		if err != nil {
-			return fmt.Errorf("failed to write to module .env file: %v", err)
+			return fmt.Errorf("failed to copy docker-compose.yml: %v", err)
 		}
+
+		// Read template .env file
+		templateEnvPath := filepath.Join(templateDir, ".env.template")
+		templateEnvContent, err := os.ReadFile(templateEnvPath)
+		if err != nil {
+			return fmt.Errorf("failed to read template .env file: %v", err)
+		}
+
+		// Process the .env template with user input for variable values
+		moduleEnvVars := utils.ProcessEnvTemplate(string(templateEnvContent))
+
+		// Create .env file with user-provided values
+		moduleEnvPath := filepath.Join(moduleDir, ".env")
+		moduleEnvFile, err := os.Create(moduleEnvPath)
+		if err != nil {
+			return fmt.Errorf("failed to create module .env file: %v", err)
+		}
+		defer moduleEnvFile.Close()
+
+		for key, value := range moduleEnvVars {
+			_, err := moduleEnvFile.WriteString(fmt.Sprintf("%s=%s\n", key, value))
+			if err != nil {
+				return fmt.Errorf("failed to write to module .env file: %v", err)
+			}
+		}
+	} else {
+		// Directory exists, check if config files exist
+		dockerComposePath := filepath.Join(moduleDir, "docker-compose.yml")
+		envFilePath := filepath.Join(moduleDir, ".env")
+		
+		if _, err := os.Stat(dockerComposePath); os.IsNotExist(err) {
+			return fmt.Errorf("docker-compose.yml not found for container %s", containerName)
+		}
+		
+		if _, err := os.Stat(envFilePath); os.IsNotExist(err) {
+			return fmt.Errorf(".env file not found for container %s", containerName)
+		}
+		
+		log.Printf("Using existing configuration for container %s", containerName)
 	}
 
 	// Run the container with docker-compose
