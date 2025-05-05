@@ -34,6 +34,7 @@ services:
     volumes:
       - wordpress-data:/bitnami/wordpress
     environment:
+      WORDPRESS_DATABASE_HOST: mariadb
       WORDPRESS_DATABASE_PORT_NUMBER: 3306
       WORDPRESS_DATABASE_NAME: ${WORDPRESS_DB_NAME}
       WORDPRESS_DATABASE_USER: ${WORDPRESS_DB_USER}
@@ -53,10 +54,10 @@ services:
       - wordpress-network
       - traefik-network
     healthcheck:
-      test: timeout 10s bash -c ':> /dev/tcp/127.0.0.1/8080' || exit 1
-      interval: 10s
-      timeout: 5s
-      retries: 3
+      test: ["CMD", "curl", "-fs", "http://localhost/wp-login.php"] 
+      interval: 30s
+      timeout: 10s
+      retries: 5
       start_period: 90s
     labels:
       - "traefik.enable=true"
