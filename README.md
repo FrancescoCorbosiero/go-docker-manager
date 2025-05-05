@@ -1,20 +1,41 @@
-# Go Docker Manager - Containers CI/CD pipeline
+# Tool for Docker Compose
+
+## ⚠️: This is an experimental project in the prototyping phase — future development is highly unlikely due to poor Proof of Concept.
 
 **Goal:**
-Intuitive & easy orchestration of docker containers on single remote VPS.
+Intuitive & easy management of `docker compose` operations.
 
-In order to host a new webiste it's enough to create a module under /compose directory.
-A module is composed of those necessary configuration files in order to run with docker compose (usually .env + docker-compose.yml is enough).
-User should be able to easily modify modules for each website both manually, from Makefile configuration and (in the future) from web UI dashboard like a mini VPS management system.
+When it comes to simple and straightforward orchestration of your docker containers, meaning:
 
-The project is composed of a core set of *core* modules that handle orchestration of docker containers through docker *templates* (.env file + docker-compose.yml + extra sh files(optional))
-that can be extended as a web UI dashboard like a mini VPS management system.
+- run, stop, delete containers
+- volume backup management
+- monitoring of the running containers
 
-Eveything inside root dir is aligned with VPS file system through GitHub Actions workflow.
+you don't usually need complex solutions like Kubernetes or Ansible,
+`docker compose` itlself should be enough with his *declarative* and *deterministic* `docker-compose.yml` file both with the interpolation of `environment variables` defined in `.env` file.
 
-## Host new container *manually*
+Unfortunately, `docker compose` was not designed for scalable multi-instance reuse out-of-the-box.
 
-1. Create a new *template* under `/templates` (.env + docker-compose.yml) if doesn't already exists one.
+While Compose supports some environment variable interpolation via .env or export, it doesn’t let you easily:
+
+- Dynamically reuse the same file for N independent instances
+- Launch N isolated containers from the same Compose file without collisions
+
+Compose makes this possible through -p flag:
+
+`docker compose -p [namespace] up -d`
+
+However configuration and organization of the file system can be messy.
+
+This application aims to let the user create and maintain his own file system organization and setup of the docker compose *easily*.
+
+Users can create a docker compose `template` module, containing the dockerized version of the application, and run as many instances he wants without worrying about configuration files conflicts.
+
+Another important design key of the application is to be friendly for on-point manual operations, which means that this setup is easily modifiable *manually* (directly on file system) or through CLI commands (*Makefile*).
+
+## Host new container *manually* with Docker Compose
+
+1. Create a new *template* module under `/templates` (.env + docker-compose.yml) if doesn't already exists one.
 2. Copy the files from the template to a new *module* under `/compose` (.env + docker-compose.yml) and populate the `.env` file with actual configuration values.
 3. Run with docker compose under `/compose/[module]`
 
@@ -23,26 +44,34 @@ Eveything inside root dir is aligned with VPS file system through GitHub Actions
     docker compose -p [module] up -d
     ```
 
-## Host new container from Makefile
+This manual process is perfectly fine but you would usually prefer using Makefile instead.
+
+## Host new container with Makefile
 
 Makefile is used as glue cli interface for the Go application logic.
 
 1. Move under root `/`
-2. Run:
+2. Chose a template and the container name. Run:
 
     ```bash
     make dock CONTAINER="webserver" TEMPLATE="traefik"
     ```
 
-    It should run the Go app inherent to *docking* process (create configuration file and run).
+3. Wait until logs are written and check for status:
+
+    ```bash
+    make list
+    ```
+
+    You should see your new container running and healthy.
 
 ## Host new container from web UI
 
-...
+**WIP**
 
 ## First time setup on VPS
 
-### Allow GitHub
+### Allow GitHub Deploy
 
 1. Add ssh public key
 
@@ -51,10 +80,9 @@ Makefile is used as glue cli interface for the Go application logic.
     ```
 
 2. Add the public key (`~/.ssh/id_ed25519.pub`) to GitHub as a Deploy Key:
+
     - Go to your GitHub repo → Settings → Deploy Keys
-
     - Click "Add Deploy Key" and paste the contents of the public key
-
     - Check "Allow write access" if you plan to push too (optional)
 
 3. Test
@@ -68,8 +96,6 @@ Makefile is used as glue cli interface for the Go application logic.
 ### Clone and generate dedicated ssh key
 
 1. Clone from GitHub
-
-   Under `/go-docker-manager`
 
     ```bash
     git clone https://github.com/FrancescoCorbosiero/go-docker-manager.git
