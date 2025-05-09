@@ -1,4 +1,4 @@
-# Tool for Docker Compose
+# Go docker manager - Tool for docker compose
 
 ## ⚠️: This is an experimental project in the prototyping phase — future development is highly unlikely due to poor Proof of Concept.
 
