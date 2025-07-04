@@ -33,7 +33,7 @@ services:
   wordpress:
     image: ${WORDPRESS_IMAGE_TAG}
     volumes:
-      - wordpress-data:/bitnami/wordpress
+      - wordpress-data:/bitnami
     environment:
       WORDPRESS_DATABASE_HOST: mariadb
       WORDPRESS_DATABASE_PORT_NUMBER: 3306
