@@ -1,6 +1,6 @@
 networks:
   wordpress-network:
-    name: ${PROJECT_NAME}-wordpress-network
+    name: ${PROJECT_NAME}-network
     driver: bridge
   traefik-network:
     external: true
