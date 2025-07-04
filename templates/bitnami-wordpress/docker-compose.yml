@@ -1,13 +1,14 @@
 networks:
   wordpress-network:
-    external: true
+    name: ${PROJECT_NAME}-wordpress-network
+    driver: bridge
   traefik-network:
     external: true
- 
+
 volumes:
   wordpress-data:
   mariadb-data:
- 
+
 services:
   mariadb:
     image: ${WORDPRESS_MARIADB_IMAGE_TAG}
@@ -29,7 +30,7 @@ services:
       retries: 3
       start_period: 60s
     restart: unless-stopped
- 
+
   wordpress:
     image: ${WORDPRESS_IMAGE_TAG}
     volumes:
