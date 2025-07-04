@@ -23,11 +23,10 @@ services:
     networks:
       - wordpress-network
     healthcheck:
-      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
-      interval: 10s
-      timeout: 5s
-      retries: 3
-      start_period: 60s
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${WORDPRESS_DB_ADMIN_PASSWORD}"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
     restart: unless-stopped
  
   wordpress:
