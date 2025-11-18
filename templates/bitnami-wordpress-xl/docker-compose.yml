@@ -19,10 +19,17 @@ services:
       MARIADB_USER: ${WORDPRESS_DB_USER}
       MARIADB_PASSWORD: ${WORDPRESS_DB_PASSWORD}
       MARIADB_ROOT_PASSWORD: ${WORDPRESS_DB_ADMIN_PASSWORD}
-      # Increase MySQL limits for large imports
-      MARIADB_EXTRA_FLAGS: --max_allowed_packet=256M --innodb_buffer_pool_size=256M --wait_timeout=300
+      # High-performance configuration for large sites
+      MARIADB_EXTRA_FLAGS: --max_allowed_packet=512M --innodb_buffer_pool_size=512M --wait_timeout=300
     networks:
       - wordpress-network
+    # High resource allocation for large databases
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+        reservations:
+          memory: 512M
     healthcheck:
       test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
       interval: 10s
@@ -53,7 +60,7 @@ services:
       WORDPRESS_SMTP_USER: ${WORDPRESS_SMTP_USER_NAME}
       WORDPRESS_SMTP_PASSWORD: ${WORDPRESS_SMTP_PASSWORD}
       
-      # PHP Configuration for Large Uploads
+      # PHP Configuration for Large Sites (E-commerce, High-Traffic Sites)
       PHP_UPLOAD_MAX_FILESIZE: 512M
       PHP_POST_MAX_SIZE: 512M
       PHP_MEMORY_LIMIT: 1024M
@@ -77,7 +84,7 @@ services:
     networks:
       - wordpress-network
       - traefik-network
-    # Increase container resources
+    # Maximum container resources for high-performance sites
     deploy:
       resources:
         limits:
