@@ -50,6 +50,8 @@ This manual process is perfectly fine but you would usually prefer using Makefil
 
 Makefile is used as glue cli interface for the Go application logic.
 
+**Note:** The first time you run any make command (except `make help`), the Go binary will be automatically compiled if it doesn't exist.
+
 1. Move under root `/`
 2. Chose a template and the container name. Run:
 
@@ -107,7 +109,15 @@ Makefile is used as glue cli interface for the Go application logic.
     git clone https://github.com/FrancescoCorbosiero/go-docker-manager.git .
     ```
 
-2. Generate SSH key
+2. Build the Go application (required before first use)
+
+    ```bash
+    make build
+    ```
+
+    Note: The Makefile will automatically build the binary if it doesn't exist when you run other commands, but you can also build it explicitly.
+
+3. Generate SSH key
 
     ```bash
     ssh-keygen -t rsa -b 4096 -f deploy_github_actions
@@ -145,7 +155,9 @@ Makefile is used as glue cli interface for the Go application logic.
     ```txt
     make: Shows the help message.
 
-    make list: Shows running containers
+    make build: Builds the Go binary.
+
+    make list: Shows running containers (auto-builds if needed).
 
     make logs CONTAINER=site2: Tails the logs for site2.
 
@@ -153,7 +165,9 @@ Makefile is used as glue cli interface for the Go application logic.
 
     make restart CONTAINER=site1: Stops and then starts site1.
 
-    make dock CONTAINER=site1 TEMPLATE=template: create module (.env + compose file) under /compose if doesn't exists and run
+    make dock CONTAINER=site1 TEMPLATE=template: create module (.env + compose file) under /compose if doesn't exists and run.
+
+    make clean: Removes the compiled binary.
     ```
 
 ## Utils

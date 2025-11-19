@@ -1,13 +1,14 @@
 package main
 
 import (
-	"fmt"
 	"flag"
+	"fmt"
 	"io"
 	"log"
 	"os"
-	"github.com/FrancescoCorbosiero/go-docker-manager/shared"
+
 	"github.com/FrancescoCorbosiero/go-docker-manager/internal"
+	"github.com/FrancescoCorbosiero/go-docker-manager/shared"
 	//"github.com/FrancescoCorbosiero/go-docker-manager/pkg/utils"
 )
 
@@ -27,9 +28,10 @@ func main() {
 	}
 
 	// Parse command-line arguments
-	command := flag.String("command", "", "Command to execute (dock, list, logs, down, restart)")
+	command := flag.String("command", "", "Command to execute (dock, list, logs, down, restart, network-create)")
 	container := flag.String("container", "", "Container/module name")
 	template := flag.String("template", "", "Template name to use")
+	network := flag.String("network", "", "Network name")
 	flag.Parse()
 
 	// Execute the requested command
@@ -71,6 +73,14 @@ func main() {
 		if err != nil {
 			log.Fatalf("Failed to restart container: %v", err)
 		}
+	case "network-create":
+		if *network == "" {
+			log.Fatal("Network name is required for network-create command")
+		}
+		err := internal.CreateNetwork(*network)
+		if err != nil {
+			log.Fatalf("Failed to create network: %v", err)
+		}
 	default:
 		printHelp()
 	}
@@ -85,4 +95,5 @@ func printHelp() {
 	fmt.Println("  -command=logs -container=NAME                    Show logs for a container")
 	fmt.Println("  -command=down -container=NAME                    Stop and remove a container")
 	fmt.Println("  -command=restart -container=NAME                 Restart a container")
+	fmt.Println("  -command=network-create -network=NAME            Create a docker network")
 }

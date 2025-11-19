@@ -6,8 +6,9 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"github.com/FrancescoCorbosiero/go-docker-manager/shared"
+
 	utils "github.com/FrancescoCorbosiero/go-docker-manager/pkg/utils"
+	"github.com/FrancescoCorbosiero/go-docker-manager/shared"
 )
 
 // dockContainer creates a new module from a template and runs it
@@ -19,7 +20,7 @@ func DockContainer(config shared.Configuration, containerName, templateName stri
 	if _, err := os.Stat(moduleDir); os.IsNotExist(err) {
 		// Directory doesn't exist, we need to create it and set up the container
 		log.Printf("Creating new configuration for container %s", containerName)
-		
+
 		// Check if template exists
 		templateDir := filepath.Join(config.TemplatesDir, templateName)
 		if _, err := os.Stat(templateDir); os.IsNotExist(err) {
@@ -68,15 +69,15 @@ func DockContainer(config shared.Configuration, containerName, templateName stri
 		// Directory exists, check if config files exist
 		dockerComposePath := filepath.Join(moduleDir, "docker-compose.yml")
 		envFilePath := filepath.Join(moduleDir, ".env")
-		
+
 		if _, err := os.Stat(dockerComposePath); os.IsNotExist(err) {
 			return fmt.Errorf("docker-compose.yml not found for container %s", containerName)
 		}
-		
+
 		if _, err := os.Stat(envFilePath); os.IsNotExist(err) {
 			return fmt.Errorf(".env file not found for container %s", containerName)
 		}
-		
+
 		log.Printf("Using existing configuration for container %s", containerName)
 	}
 
@@ -155,5 +156,29 @@ func RestartContainer(containerName string) error {
 
 	log.Printf("Container %s restarted successfully", containerName)
 	fmt.Printf("Container %s restarted successfully\n", containerName)
+	return nil
+}
+
+// CreateNetwork creates a docker network if it doesn't exist
+func CreateNetwork(networkName string) error {
+	log.Printf("Creating docker network: %s", networkName)
+
+	// Check if network already exists
+	checkCmd := exec.Command("docker", "network", "inspect", networkName)
+	if err := checkCmd.Run(); err == nil {
+		log.Printf("Network %s already exists", networkName)
+		fmt.Printf("Network %s already exists\n", networkName)
+		return nil
+	}
+
+	// Create the network
+	cmd := exec.Command("docker", "network", "create", networkName)
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("failed to create network: %v, output: %s", err, output)
+	}
+
+	log.Printf("Network %s created successfully", networkName)
+	fmt.Printf("Network %s created successfully\n", networkName)
 	return nil
 }
