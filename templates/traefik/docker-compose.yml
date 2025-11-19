@@ -1,6 +1,4 @@
 networks:
-  wordpress-network:
-    external: true
   traefik-network:
     external: true
  

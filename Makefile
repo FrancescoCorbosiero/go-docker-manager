@@ -61,6 +61,10 @@ restart: $(BINARY_NAME)
 
 # Create and start a new container
 dock: $(BINARY_NAME)
+	@if ! docker network inspect traefik-network >/dev/null 2>&1; then \
+		echo "traefik-network not found. Running setup-networks..."; \
+		$(MAKE) setup-networks; \
+	fi
 	@if [ -z "$(CONTAINER)" ]; then \
 		echo "Error: CONTAINER parameter is required"; \
 		echo "Usage: make dock CONTAINER=name TEMPLATE=template"; \
@@ -91,5 +95,4 @@ network-create: $(BINARY_NAME)
 setup-networks: $(BINARY_NAME)
 	@echo "Creating required docker networks..."
 	@./$(BINARY_NAME) -command=network-create -network=traefik-network
-	@./$(BINARY_NAME) -command=network-create -network=wordpress-network
 	@echo "All required networks are ready!"
